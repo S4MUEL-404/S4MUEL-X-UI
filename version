@@ -1,6 +1,7 @@
-v1.1.1-s4更新内容：
-1. 面板设置或重启失败时停止流程，避免误报安装及升级成功。
-2. HTTPS配置要求同时具备证书与私钥，配置失败即停止。
-3. 安装及升级后探测实际端口、根路径和HTTP/HTTPS响应。
-4. 登录地址依据实际响应协议显示，不再仅凭证书记录推断HTTPS。
-5. 新增面板探测回归测试并纳入CI。
+v1.1.1-s4
+Release notes:
+1. Stop installation when panel settings or service restarts fail.
+2. Require both a certificate and private key for HTTPS; stop on configuration failure.
+3. Probe the saved panel port, base path, and HTTP/HTTPS response after installation or upgrade.
+4. Display login URLs using the live protocol instead of certificate marker files.
+5. Add panel-readiness regression tests to CI.

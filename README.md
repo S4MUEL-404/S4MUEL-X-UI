@@ -1,55 +1,99 @@
 # S4MUEL X-UI
 
-由 **S4MUEL** 維護與客製化的 X-UI 安裝及管理腳本，基於 [yonggekkk/x-ui-yg](https://github.com/yonggekkk/x-ui-yg)。
+An X-UI installation and management script maintained and customized by **S4MUEL**, based on [yonggekkk/x-ui-yg](https://github.com/yonggekkk/x-ui-yg).
 
-## 安裝
+## Quick start
 
-在支援的 Linux VPS 上，以 root 執行：
+Use an SSH terminal connected to your Linux VPS. Run the following as root:
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/S4MUEL-404/S4MUEL-X-UI/main/install.sh)
 ```
 
-或：
+Alternatively:
 
 ```bash
 bash <(wget -qO- https://raw.githubusercontent.com/S4MUEL-404/S4MUEL-X-UI/main/install.sh)
 ```
 
-安裝後使用 `x-ui` 開啟管理選單。系統與架構支援沿用上游：Ubuntu、Debian、CentOS、Alpine；AMD64、ARM64。
+Choose **1** to install. Follow the prompts to set your username, password, panel port, base path, and HTTP/HTTPS mode. Record these values privately. Open the full login URL printed by the script, including the port and base path. Allow the panel port in your VPS provider's firewall and your server firewall if necessary.
 
-## S4MUEL 維護內容
+After installation, run `x-ui` to open the management menu. Platform support is inherited from upstream: Ubuntu, Debian, CentOS, and Alpine on AMD64 or ARM64. Compatibility depends on the specific OS release and available upstream binaries.
 
-- 終端主選單、安裝提示及使用說明採用 S4MUEL X-UI 品牌。
-- 安裝後的管理腳本與版本檢查使用本儲存庫的 `main` 分支。
-- 保留 `/etc/x-ui-yg`、`x-ui-yg.db`、`x-ui` 服務與憑證路徑，維持上游相容性。
-- 面板功能沿用上游，包括 Hysteria2、Argo、WARP 與本地訂閱。
+## Everyday tasks
 
-## 更新、備份與還原
+| Task | Main menu option |
+| --- | --- |
+| Install | 1 |
+| Uninstall and delete data | 2 |
+| Configure tunnels and subscriptions | 3 |
+| Change panel credentials, port, or base path | 4 |
+| Stop or restart the panel | 5 |
+| Update or restore | 6 |
+| Generate or view client configurations and subscriptions | 7 |
+| View service logs | 8 |
+| Refresh displayed connection information | 13 |
+| View project information | 14 |
 
-執行 `x-ui`，選擇選單 **6**：
+For routine script updates, choose **6**, then **1**. Upgrading the panel itself is a separate operation: **6**, then **2**.
 
-1. **僅更新管理腳本**：HTTPS 下載到目標目錄的暫存檔，檢查 HTTP 狀態、標頭、內嵌版本號與 Bash 語法。備份舊腳本及版本記錄後，以同檔案系統的重新命名替換；不重啟面板。下載、驗證、備份或替換失敗時保留原腳本。
-2. **升級面板**：停止服務後，將 `/etc/x-ui-yg`（含 SQLite WAL 檔案）與 `/usr/local/x-ui/bin` 備份至私有目錄，再執行上游套件升級。備份失敗則取消升級並嘗試重新啟動服務。
-3. **還原管理腳本**：輸入先前顯示的腳本備份目錄，還原腳本及版本記錄，不重啟面板。
+## Reliability improvements
 
-備份目錄位於 `/usr/local/x-ui/backups/`；每次操作會建立獨立、僅擁有者可存取的子目錄。面板資料包含憑證及帳號等敏感資訊，請妥善保管。
+- Independent management-script updates without restarting the panel.
+- HTTPS downloads with HTTP error handling and timeouts.
+- Validation of the staged script's shebang, embedded version, and Bash syntax before replacement.
+- A backup of the previous script and version record before an atomic replacement on the same filesystem.
+- Script restoration from a previous backup.
+- Panel data backups before panel upgrades.
+- Installation stops on failed settings, certificate configuration, or service restarts.
+- Live panel readiness checks before installation or upgrade reports success.
+- Login URLs use the observed HTTP/HTTPS protocol instead of relying on certificate marker files.
 
-面板資料備份供手動救援使用；面板二進位檔升級沒有自動回滾功能。Bash 語法與版本標記檢查不代表完整程式碼審計或套件簽章驗證。請勿同時執行多個更新作業。
+Existing database filenames, `/etc/x-ui-yg`, the `x-ui` service, and certificate paths are preserved for upstream compatibility.
 
-## 來源與依賴
+## Updates, backups, and restoration
 
-本版本的品牌與腳本客製化由 S4MUEL 維護；原始功能與上游貢獻保留其原作者歸屬。
+Run `x-ui` and choose **6**:
 
-- 上游腳本：[yonggekkk/x-ui-yg](https://github.com/yonggekkk/x-ui-yg)
-- 面板套件：仍使用上游 `xui_yg` Release；本版本未重新編譯或修改網頁面板。
-- 憑證工具：[acme-yg](https://github.com/yonggekkk/acme-yg)
-- WARP 工具：[warp-yg](https://github.com/yonggekkk/warp-yg)
-- 上游列出的參考專案：[vaxilu/x-ui](https://github.com/vaxilu/x-ui)、[MHSanaei/3x-ui](https://github.com/MHSanaei/3x-ui)、[qist/xray-ui](https://github.com/qist/xray-ui)、[bepass-org/warp-plus](https://github.com/bepass-org/warp-plus)
+1. **Update the management script only.** Download a candidate beside the installed script, validate it, back up the current script and version record, and replace the script. Download, validation, backup, or replacement failure leaves the previous script in place. The panel is not restarted.
+2. **Upgrade the panel.** Stop the service and archive `/etc/x-ui-yg`, including any SQLite WAL files, and `/usr/local/x-ui/bin` before installing upstream binaries. If backup fails, abort the upgrade and attempt to restart the service.
+3. **Restore a management script.** Enter the full script backup directory printed during an earlier update. Restore the script and version record without restarting the panel.
 
-上游 README 聲明面板二進位檔未開源。本儲存庫未新增或變更上游及第三方元件的授權。
+Backups are stored in separate owner-only subdirectories under `/usr/local/x-ui/backups/`. Keep an off-server copy of important backups. Panel archives may contain account information, certificates, and subscription credentials.
 
-## 驗證
+Panel archives are for manual recovery; automatic rollback of panel binaries is not implemented. Backups in this directory are removed by the uninstall operation, so export them before uninstalling. Do not run concurrent updates.
+
+Syntax and version checks are not a code audit or cryptographic signature verification.
+
+## HTTPS and readiness checks
+
+HTTPS configuration requires both a certificate and its private key. Configuration failures stop installation. After restarting the service, the script probes the saved panel port and base path on `127.0.0.1`. It accepts HTTP 200 and common redirect responses. If HTTPS was requested but only HTTP responds, installation does not report success.
+
+The loopback probe skips certificate verification to accommodate self-signed certificates. It does not prove that browsers trust the certificate, DNS is correct, or an external firewall allows access. A panel bound exclusively to a different interface may fail the loopback check.
+
+## Troubleshooting
+
+- **Login page does not open:** check the complete URL, port, and base path, then check both firewall layers. Refresh panel information with menu **13**.
+- **HTTPS setup fails:** confirm that both certificate and private-key files exist and that the configured hostname matches your certificate. Read the reported error before retrying.
+- **Service fails to start:** use menu **8** or `journalctl -u x-ui --no-pager -n 100` on systemd systems. On Alpine, use `rc-service x-ui status`; the script's log viewer does not support Alpine.
+- **Script update fails:** the old script should remain available. Check connectivity, disk space, and file permissions. Use menu **6 → 3** for a known script backup if needed.
+- **Panel upgrade fails:** keep the printed backup path. Panel recovery is manual; avoid uninstalling before exporting the backup.
+
+Do not share passwords, tokens, private keys, or complete subscription URLs in public issues.
+
+## Sources and dependencies
+
+S4MUEL maintains this fork's script changes and branding. Upstream functionality and third-party components retain their original authorship.
+
+- Upstream script: [yonggekkk/x-ui-yg](https://github.com/yonggekkk/x-ui-yg)
+- Panel binaries: upstream `xui_yg` release assets; this fork does not rebuild or rebrand the web panel.
+- Certificate helper: [acme-yg](https://github.com/yonggekkk/acme-yg)
+- WARP helper: [warp-yg](https://github.com/yonggekkk/warp-yg)
+- References listed by upstream: [vaxilu/x-ui](https://github.com/vaxilu/x-ui), [MHSanaei/3x-ui](https://github.com/MHSanaei/3x-ui), [qist/xray-ui](https://github.com/qist/xray-ui), and [bepass-org/warp-plus](https://github.com/bepass-org/warp-plus).
+
+Upstream states that its panel binaries are not open source. This fork does not add or change licenses for upstream or third-party components. The inherited interactive script and external tools may display Chinese; this repository's documentation is in English.
+
+## Validation
 
 ```bash
 bash -n install.sh
@@ -57,13 +101,26 @@ python3 test_updates.py
 python3 test_panel.py
 ```
 
-測試只擷取更新函式，在暫存目錄模擬下載，不執行安裝流程。涵蓋成功更新、部分下載失敗、空白與 HTML 回應、語法錯誤、缺少版本、備份失敗、替換失敗、還原及無效還原。
+The 10 update/restore tests and 5 panel-readiness tests isolate script functions and mock downloads or panel responses. They do not run the installer or access a real server. GitHub Actions runs these checks on pushes and pull requests.
 
-GitHub Actions 對 push 與 pull request 執行相同檢查。尚未在 Linux VPS 實際安裝或升級面板驗證。
+These tests do not validate every installation or upgrade scenario on a live VPS.
 
+## Changelog
 
-## v1.1.1-s4：面板就緒與 HTTPS 判斷修正
+### v1.1.1-s4
 
-設定帳號、端口、根路徑或憑證失敗時停止安裝；HTTPS 必須同時具備憑證與私鑰。安裝與面板升級在重啟後，會依已儲存的端口和根路徑探測本機服務；選擇 HTTPS 時若只收到 HTTP 回應，流程會報錯而非顯示成功。主選單也依實際回應協定顯示登入網址。
+- Stop installation on failed panel settings or certificate configuration.
+- Require both certificate and private key for HTTPS.
+- Stop on restart failure; probe the configured panel port and base path before reporting installation or upgrade success.
+- Display login URLs using the live protocol.
+- Add five panel-readiness regression tests to CI.
 
-探測使用 `127.0.0.1`，接受 HTTP 200 與常見重新導向狀態。此檢查確認本機服務就緒，不保證外部防火牆、網域解析或瀏覽器憑證信任正常；探測自簽憑證時會略過本機 TLS 憑證驗證。五項面板探測測試涵蓋 HTTP、HTTPS、HTTPS 要求不符、無監聽服務與錯誤路徑。
+### v1.1.0-s4
+
+- Add independent script updates, staged validation, backups, and script restoration.
+- Back up panel data before panel upgrades.
+- Add 10 isolated update/restore tests and GitHub Actions.
+
+### v1.0.0-s4
+
+- Introduce S4MUEL branding, project documentation, and independent script/version endpoints while preserving upstream compatibility and attribution.
