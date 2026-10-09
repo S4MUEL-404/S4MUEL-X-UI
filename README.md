@@ -1,67 +1,46 @@
+# S4MUEL X-UI
 
-### x-ui精简修改版一键脚本，面板中的相关设置尽可能与原作者[vaxilu](https://github.com/vaxilu/x-ui)保持一致
+由 **S4MUEL** 維護與客製化的 X-UI 安裝及管理腳本，基於 [yonggekkk/x-ui-yg](https://github.com/yonggekkk/x-ui-yg)。
 
-### 支持纯IPV4、纯IPV6、AMD64、ARM64的VPS直接安装
+## 安裝
 
-### 支持alpine系统，推荐使用最新的Ubuntu系统
+在支援的 Linux VPS 上，以 root 執行：
 
-### Docker版本[https://github.com/ShaoG-R/x-ui-yg-docker](https://github.com/ShaoG-R/x-ui-yg-docker)———由[ShaoG-R](https://github.com/ShaoG-R)维护
-
-### 本项目订阅节点为本地化生成，不使用节点转换等第三方外链引用，无需担心节点订阅被外链作者查看
-
------------------------------------------------
-
-### 相关说明及注意点请查看[博客说明](https://ygkkk.blogspot.com/2023/05/reality-xui-chatgpt.html)
-
-### 视频教程：
-
-[🥇搭建代理9大问题排行榜：第4名全网99%的人被误导！第1名每个人都被折腾到爆！](https://youtu.be/pJwJBqBkcfw)
-
-[🥇2025年度代理协议"拉到夯"综合排名](https://youtu.be/IoFtykGXDao)
-
-[x-ui搭建xray协议大更新（一）：reality协议三模式，数据重置、备份、恢复详细操作](https://youtu.be/xlvKnjQoF7c)
-
-[x-ui搭建xray协议大更新（二）：集成Argo固定隧道、临时隧道](https://youtu.be/NCPCHAi8pzs)
-
-[x-ui搭建xray协议大更新（三）：支持多协议聚合订阅，自动生成Clash-meta、Sing-box配置文件](https://youtu.be/UlQm6c0UQ4U)
-
-[x-ui搭建xray协议大更新（四）：支持Alpine系统；ChatGPT客户端可以随便登录了，多IP分流设置详细说明](https://youtu.be/2G2f64Mm1UU)
-
-[x-ui搭建xray协议大更新（五）：集成oblivion warp免费vpn功能，支持本地WARP+赛风VPN切换分流(30个国家IP)](https://youtu.be/Zo65206HBRM)
-
-[x-ui搭建xray协议大更新（六）：Xhttp轻松搞定UDP/TCP/CDN，Xhttp最简单的7个方案，总有一款适合你](https://youtu.be/kY_4AyQh1l0)
-
-[x-ui-yg面版脚本大更新（七）：支持Hy2协议，自签证书与IP证书设置要点；多端口跳跃设置；本地IP订阅链接自动更新配置](https://youtu.be/8AI_fFwHMJE)
-
------------------------------------------------------
-### 交流平台：[甬哥博客地址](https://ygkkk.blogspot.com)、[甬哥YouTube频道](https://www.youtube.com/@ygkkk)、[甬哥TG电报群组](https://t.me/+jZHc6-A-1QQ5ZGVl)、[甬哥TG电报频道](https://t.me/+DkC9ZZUgEFQzMTZl)
-
--------------------------------
-
-### 一键脚本：
-```
-bash <(wget -qO- https://raw.githubusercontent.com/yonggekkk/x-ui-yg/main/install.sh)
-```
-或
-```
-bash <(curl -Ls https://raw.githubusercontent.com/yonggekkk/x-ui-yg/main/install.sh)
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/S4MUEL-404/S4MUEL-X-UI/main/install.sh)
 ```
 
------------------------------------------------------
-### x-ui-yg脚本菜单界面附加功能全开预览图（注：相关参数随意填写，仅供围观）
+或：
 
-![3b01adef46255df98053a3e49372373](https://github.com/user-attachments/assets/cea4568f-bb19-46b9-a35b-bacc67ac573a)
+```bash
+bash <(wget -qO- https://raw.githubusercontent.com/S4MUEL-404/S4MUEL-X-UI/main/install.sh)
+```
 
------------------------------------------------------
-### 感谢支持！微信打赏甬哥侃侃侃ygkkk
-![41440820a366deeb8109db5610313a1](https://github.com/user-attachments/assets/69597ca3-e7a5-44e7-8e5e-6305c7a63933)
+安裝後使用 `x-ui` 開啟管理選單。系統與架構支援沿用上游：Ubuntu、Debian、CentOS、Alpine；AMD64、ARM64。
 
------------------------------------------------------
+## S4MUEL 維護內容
 
-### 感谢你右上角的star🌟
-[![Stargazers over time](https://starchart.cc/yonggekkk/x-ui-yg.svg)](https://starchart.cc/yonggekkk/x-ui-yg)
+- 終端主選單、安裝提示及使用說明採用 S4MUEL X-UI 品牌。
+- 安裝後的管理腳本與版本檢查使用本儲存庫的 `main` 分支。
+- 保留 `/etc/x-ui-yg`、`x-ui-yg.db`、`x-ui` 服務與憑證路徑，維持上游相容性。
+- 面板功能沿用上游，包括 Hysteria2、Argo、WARP 與本地訂閱。
 
----------------------------------------
-#### 声明：所有代码来源于Github参考项目与ChatGPT的整合，参考项目[vaxilu](https://github.com/vaxilu/x-ui)，[MHSanaei](https://github.com/MHSanaei/3x-ui)，[qist](https://github.com/qist/xray-ui)，[warpplus](https://github.com/bepass-org/warp-plus)
+## 更新與備份
 
-#### 二进制文件未开源，介意者请勿安装使用 
+執行 `x-ui`，選擇選單 6 更新。該選項沿用上游行為，會重新下載面板套件並重啟服務；更新前請備份 `/etc/x-ui-yg/x-ui-yg.db` 或使用面板備份功能。
+
+## 來源與依賴
+
+本版本的品牌與腳本客製化由 S4MUEL 維護；原始功能與上游貢獻保留其原作者歸屬。
+
+- 上游腳本：[yonggekkk/x-ui-yg](https://github.com/yonggekkk/x-ui-yg)
+- 面板套件：仍使用上游 `xui_yg` Release；本版本未重新編譯或修改網頁面板。
+- 憑證工具：[acme-yg](https://github.com/yonggekkk/acme-yg)
+- WARP 工具：[warp-yg](https://github.com/yonggekkk/warp-yg)
+- 上游列出的參考專案：[vaxilu/x-ui](https://github.com/vaxilu/x-ui)、[MHSanaei/3x-ui](https://github.com/MHSanaei/3x-ui)、[qist/xray-ui](https://github.com/qist/xray-ui)、[bepass-org/warp-plus](https://github.com/bepass-org/warp-plus)
+
+上游 README 聲明面板二進位檔未開源。本儲存庫未新增或變更上游及第三方元件的授權。
+
+## 驗證範圍
+
+已通過 Bash 語法檢查及下載來源檢查；尚未在 Linux VPS 實際安裝驗證。

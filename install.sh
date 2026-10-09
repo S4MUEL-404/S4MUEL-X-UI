@@ -1,4 +1,7 @@
 #!/bin/bash
+# S4MUEL X-UI — maintained and customized by S4MUEL
+# Based on https://github.com/yonggekkk/x-ui-yg
+# Upstream panel binaries and external tools retain their original authorship.
 export LANG=en_US.UTF-8
 sred='\033[5;31m'
 red='\033[0;31m'
@@ -58,7 +61,7 @@ bbr="Openvz/Lxc"
 fi
 
 if [ ! -f xuiyg_update ]; then
-green "首次安装x-ui-yg脚本必要的依赖……"
+green "首次安装 S4MUEL X-UI 脚本必要的依赖……"
 if [[ x"${release}" == x"alpine" ]]; then
 apk update
 apk add wget curl tar jq iptables tzdata openssl busybox-extras expect git socat iproute2 coreutils util-linux 
@@ -170,7 +173,7 @@ systemctl start x-ui >/dev/null 2>&1
 cd
 rm /usr/bin/x-ui -f
 #curl -L -o /usr/bin/x-ui --insecure https://gitlab.com/rwkgyg/x-ui-yg/raw/main/1install.sh >/dev/null 2>&1
-curl -L -o /usr/bin/x-ui -# --retry 2 --insecure https://raw.githubusercontent.com/yonggekkk/x-ui-yg/main/install.sh
+curl -L -o /usr/bin/x-ui -# --retry 2 --insecure https://raw.githubusercontent.com/S4MUEL-404/S4MUEL-X-UI/main/install.sh
 chmod +x /usr/bin/x-ui
 if [[ x"${release}" == x"alpine" ]]; then
 echo '#!/sbin/openrc-run
@@ -324,13 +327,13 @@ resinstall(){
 echo "----------------------------------------------------------------------"
 restart
 #curl -sL https://gitlab.com/rwkgyg/x-ui-yg/-/raw/main/version/version | awk -F "更新内容" '{print $1}' | head -n 1 > /usr/local/x-ui/v
-curl -sL https://raw.githubusercontent.com/yonggekkk/x-ui-yg/main/version | awk -F "更新内容" '{print $1}' | head -n 1 > /usr/local/x-ui/v
+curl -sL https://raw.githubusercontent.com/S4MUEL-404/S4MUEL-X-UI/main/version | awk -F "更新内容" '{print $1}' | head -n 1 > /usr/local/x-ui/v
 showxuiip
 sleep 2
 xuigo
 cronxui
 echo "----------------------------------------------------------------------"
-blue "x-ui-yg $(cat /usr/local/x-ui/v 2>/dev/null) 安装成功，自动进入 x-ui 显示管理菜单" && sleep 4
+blue "S4MUEL X-UI $(cat /usr/local/x-ui/v 2>/dev/null) 安装成功，自动进入 x-ui 显示管理菜单" && sleep 4
 echo
 show_menu
 }
@@ -369,7 +372,7 @@ fi
 serinstall && sleep 2
 restart
 #curl -sL https://gitlab.com/rwkgyg/x-ui-yg/-/raw/main/version/version | awk -F "更新内容" '{print $1}' | head -n 1 > /usr/local/x-ui/v
-curl -sL https://raw.githubusercontent.com/yonggekkk/x-ui-yg/main/version | awk -F "更新内容" '{print $1}' | head -n 1 > /usr/local/x-ui/v
+curl -sL https://raw.githubusercontent.com/S4MUEL-404/S4MUEL-X-UI/main/version | awk -F "更新内容" '{print $1}' | head -n 1 > /usr/local/x-ui/v
 green "x-ui更新完成" && sleep 2 && x-ui
 else
 red "输入有误" && update
@@ -412,7 +415,7 @@ fi
 echo
 green "x-ui已卸载完成"
 echo
-blue "欢迎继续使用x-ui-yg脚本：bash <(curl -Ls https://raw.githubusercontent.com/yonggekkk/x-ui-yg/main/install.sh)"
+blue "欢迎继续使用 S4MUEL X-UI 脚本：bash <(curl -Ls https://raw.githubusercontent.com/S4MUEL-404/S4MUEL-X-UI/main/install.sh)"
 exit
 else
 red "输入有误" && uninstall
@@ -2671,31 +2674,24 @@ fi
 
 sbsm(){
 echo
-green "关注甬哥YouTube频道：https://youtube.com/@ygkkk?sub_confirmation=1 了解最新代理协议与翻墙动态"
+green "S4MUEL X-UI | Maintained by S4MUEL"
 echo
-blue "x-ui-yg脚本视频教程：https://www.youtube.com/playlist?list=PLMgly2AulGG_Affv6skQXWnVqw7XWiPwJ"
+blue "项目与使用说明：https://github.com/S4MUEL-404/S4MUEL-X-UI"
 echo
-blue "x-ui-yg脚本博客说明：https://ygkkk.blogspot.com/2023/05/reality-xui-chatgpt.html"
-echo
-blue "x-ui-yg脚本项目地址：https://github.com/yonggekkk/x-ui-yg"
+blue "基于 x-ui-yg：https://github.com/yonggekkk/x-ui-yg"
 echo
 }
 
 show_menu(){
 clear
 white "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"           
-echo -e "${bblue} ░██     ░██      ░██ ██ ██         ░█${plain}█   ░██     ░██   ░██     ░█${red}█   ░██${plain}  "
-echo -e "${bblue}  ░██   ░██      ░██    ░░██${plain}        ░██  ░██      ░██  ░██${red}      ░██  ░██${plain}   "
-echo -e "${bblue}   ░██ ░██      ░██ ${plain}                ░██ ██        ░██ █${red}█        ░██ ██  ${plain}   "
-echo -e "${bblue}     ░██        ░${plain}██    ░██ ██       ░██ ██        ░█${red}█ ██        ░██ ██  ${plain}  "
-echo -e "${bblue}     ░██ ${plain}        ░██    ░░██        ░██ ░██       ░${red}██ ░██       ░██ ░██ ${plain}  "
-echo -e "${bblue}     ░█${plain}█          ░██ ██ ██         ░██  ░░${red}██     ░██  ░░██     ░██  ░░██ ${plain}  "
-white "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" 
-white "甬哥Github项目  ：github.com/yonggekkk"
-white "甬哥Blogger博客 ：ygkkk.blogspot.com"
-white "甬哥YouTube频道 ：www.youtube.com/@ygkkk"
+echo -e "${bblue}                       S4MUEL X-UI${plain}"
+white "                    Maintained by S4MUEL"
+white "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+white "Github项目 ：github.com/S4MUEL-404/S4MUEL-X-UI"
+white "使用说明   ：github.com/S4MUEL-404/S4MUEL-X-UI#readme"
 white "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" 
-white "x-ui-yg脚本快捷方式：x-ui"
+white "S4MUEL X-UI 脚本快捷方式：x-ui"
 red "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" 
 green " 1. 一键安装 x-ui"
 green " 2. 删除卸载 x-ui"
@@ -2713,25 +2709,25 @@ green "11. 管理 Warp 查看本地Netflix、ChatGPT解锁情况"
 green "12. 添加WARP-plus-Socks5代理模式 【本地Warp/多地区Psiphon-VPN】"
 green "13. 刷新IP配置及参数显示"
 echo "----------------------------------------------------------------------------------"
-green "14. x-ui-yg脚本使用说明书"
+green "14. S4MUEL X-UI 脚本使用说明书"
 echo "----------------------------------------------------------------------------------"
 green " 0. 退出脚本"
 red "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" 
 insV=$(cat /usr/local/x-ui/v 2>/dev/null)
 #latestV=$(curl -s https://gitlab.com/rwkgyg/x-ui-yg/-/raw/main/version/version | awk -F "更新内容" '{print $1}' | head -n 1)
-latestV=$(curl -sL https://raw.githubusercontent.com/yonggekkk/x-ui-yg/main/version | awk -F "更新内容" '{print $1}' | head -n 1)
+latestV=$(curl -sL https://raw.githubusercontent.com/S4MUEL-404/S4MUEL-X-UI/main/version | awk -F "更新内容" '{print $1}' | head -n 1)
 if [[ -f /usr/local/x-ui/v ]]; then
 if [ "$insV" = "$latestV" ]; then
-echo -e "当前 x-ui-yg 脚本最新版：${bblue}${insV}${plain} (已安装)"
+echo -e "当前 S4MUEL X-UI 脚本最新版：${bblue}${insV}${plain} (已安装)"
 else
-echo -e "当前 x-ui-yg 脚本版本号：${bblue}${insV}${plain}"
-echo -e "检测到最新 x-ui-yg 脚本版本号：${yellow}${latestV}${plain} (可选择6进行更新)"
-echo -e "${yellow}$(curl -sL https://raw.githubusercontent.com/yonggekkk/x-ui-yg/main/version)${plain}"
+echo -e "当前 S4MUEL X-UI 脚本版本号：${bblue}${insV}${plain}"
+echo -e "检测到最新 S4MUEL X-UI 脚本版本号：${yellow}${latestV}${plain} (可选择6进行更新)"
+echo -e "${yellow}$(curl -sL https://raw.githubusercontent.com/S4MUEL-404/S4MUEL-X-UI/main/version)${plain}"
 #echo -e "${yellow}$(curl -sL https://gitlab.com/rwkgyg/x-ui-yg/-/raw/main/version/version)${plain}"
 fi
 else
-echo -e "当前 x-ui-yg 脚本版本号：${bblue}${latestV}${plain}"
-echo -e "请先选择 1 ，安装 x-ui-yg 脚本"
+echo -e "当前 S4MUEL X-UI 脚本版本号：${bblue}${latestV}${plain}"
+echo -e "请先选择 1 ，安装 S4MUEL X-UI 脚本"
 fi
 red "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" 
 echo -e "VPS状态如下："
