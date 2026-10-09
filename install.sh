@@ -16,6 +16,66 @@ yellow(){ echo -e "\033[33m\033[01m$1\033[0m";}
 blue(){ echo -e "\033[36m\033[01m$1\033[0m";}
 white(){ echo -e "\033[37m\033[01m$1\033[0m";}
 readp(){ read -p "$(yellow "$1")" $2;}
+# BEGIN S4MUEL RELIABLE UPDATE
+S4_SCRIPT_VERSION='v1.1.0-s4'
+S4_SCRIPT_URL='https://raw.githubusercontent.com/S4MUEL-404/S4MUEL-X-UI/main/install.sh'
+
+# Download beside the destination so mv stays on the same filesystem.
+# The subshell trap removes temporary files without changing caller traps.
+s4_update_script() (
+    local target="$1" version_file="$2" backup_root="$3"
+    local staged backup new_version
+    staged=$(mktemp "${target}.new.XXXXXX") || return 1
+    trap 'rm -f "$staged"' EXIT
+    if ! curl --fail --show-error --silent --location --retry 2 \
+        --connect-timeout 15 --max-time 120 --proto '=https' --proto-redir '=https' \
+        "$S4_SCRIPT_URL" -o "$staged"; then
+        red "脚本下载失败，原脚本未变更。"
+        return 1
+    fi
+    new_version=$(sed -n "s/^S4_SCRIPT_VERSION='\(v[0-9][0-9.a-z-]*\)'$/\1/p" "$staged")
+    if [[ ! -s "$staged" || $(head -n 1 "$staged") != '#!/bin/bash' || -z "$new_version" || "$new_version" == *$'\n'* ]] || ! bash -n "$staged"; then
+        red "下载内容不是有效的 S4MUEL 脚本，原脚本未变更。"
+        return 1
+    fi
+    # mktemp creates a private backup directory; abort if backup cannot complete.
+    mkdir -p "$backup_root" || return 1
+    backup=$(mktemp -d "$backup_root/script.XXXXXX") || return 1
+    if [[ -e "$target" ]] && ! cp -p "$target" "$backup/install.sh"; then
+        red "旧脚本备份失败，取消更新。"
+        return 1
+    fi
+    if [[ -e "$version_file" ]] && ! cp -p "$version_file" "$backup/version"; then
+        red "版本记录备份失败，取消更新。"
+        return 1
+    fi
+    if ! chmod 755 "$staged" || ! mv -f "$staged" "$target"; then
+        red "替换失败，旧脚本仍保留；备份：$backup"
+        return 1
+    fi
+    # The embedded version is authoritative; metadata failure does not break x-ui.
+    if ! printf '%s\n' "$new_version" > "$version_file"; then
+        yellow "脚本已更新，但版本记录写入失败。"
+    fi
+    green "脚本已更新为 $new_version，未重启面板。备份：$backup"
+    yellow "如需还原：在选单 6 中选择 3，并输入上述备份目录。"
+)
+
+s4_restore_script() (
+    local backup="$1" target="$2" version_file="$3" staged
+    [[ -f "$backup/install.sh" ]] && bash -n "$backup/install.sh" || return 1
+    staged=$(mktemp "${target}.restore.XXXXXX") || return 1
+    trap 'rm -f "$staged"' EXIT
+    cp "$backup/install.sh" "$staged" && chmod 755 "$staged" && mv -f "$staged" "$target" || return 1
+    if [[ -f "$backup/version" ]]; then
+        cp "$backup/version" "$version_file" || yellow "脚本已还原，但版本记录还原失败。"
+    else
+        rm -f "$version_file" || yellow "无法清除旧版本记录。"
+    fi
+    green "管理脚本已还原，未重启面板。"
+)
+# END S4MUEL RELIABLE UPDATE
+
 [[ $EUID -ne 0 ]] && yellow "请以root模式运行脚本" && exit
 stty erase $'\b' 2>/dev/null || stty erase '^H' 2>/dev/null
 #[[ -e /etc/hosts ]] && grep -qE '^ *172.65.251.78 gitlab.com' /etc/hosts || echo -e '\n172.65.251.78 gitlab.com' >> /etc/hosts
@@ -161,8 +221,8 @@ serinstall(){
 green "下载并安装x-ui相关组件……"
 cd /usr/local/
 #curl -L -o /usr/local/x-ui-linux-${cpu}.tar.gz --insecure https://gitlab.com/rwkgyg/x-ui-yg/raw/main/x-ui-linux-${cpu}.tar.gz
-curl -L -o /usr/local/x-ui-linux-${cpu}.tar.gz -# --retry 2 --insecure https://github.com/yonggekkk/x-ui-yg/releases/download/xui_yg/x-ui-linux-${cpu}.tar.gz
-tar zxvf x-ui-linux-${cpu}.tar.gz > /dev/null 2>&1
+curl -fL -o /usr/local/x-ui-linux-${cpu}.tar.gz -# --retry 2 --connect-timeout 15 --max-time 300 --proto "=https" --proto-redir "=https" https://github.com/yonggekkk/x-ui-yg/releases/download/xui_yg/x-ui-linux-${cpu}.tar.gz || return 1
+tar zxvf x-ui-linux-${cpu}.tar.gz > /dev/null 2>&1 || return 1
 rm x-ui-linux-${cpu}.tar.gz -f
 cd x-ui
 chmod +x x-ui bin/xray-linux-${cpu}
@@ -171,10 +231,7 @@ systemctl daemon-reload >/dev/null 2>&1
 systemctl enable x-ui >/dev/null 2>&1
 systemctl start x-ui >/dev/null 2>&1
 cd
-rm /usr/bin/x-ui -f
-#curl -L -o /usr/bin/x-ui --insecure https://gitlab.com/rwkgyg/x-ui-yg/raw/main/1install.sh >/dev/null 2>&1
-curl -L -o /usr/bin/x-ui -# --retry 2 --insecure https://raw.githubusercontent.com/S4MUEL-404/S4MUEL-X-UI/main/install.sh
-chmod +x /usr/bin/x-ui
+s4_update_script /usr/bin/x-ui /usr/local/x-ui/v /usr/local/x-ui/backups || return 1
 if [[ x"${release}" == x"alpine" ]]; then
 echo '#!/sbin/openrc-run
 name="x-ui"
@@ -327,7 +384,6 @@ resinstall(){
 echo "----------------------------------------------------------------------"
 restart
 #curl -sL https://gitlab.com/rwkgyg/x-ui-yg/-/raw/main/version/version | awk -F "更新内容" '{print $1}' | head -n 1 > /usr/local/x-ui/v
-curl -sL https://raw.githubusercontent.com/S4MUEL-404/S4MUEL-X-UI/main/version | awk -F "更新内容" '{print $1}' | head -n 1 > /usr/local/x-ui/v
 showxuiip
 sleep 2
 xuigo
@@ -343,7 +399,7 @@ v6
 echo "----------------------------------------------------------------------"
 openyn
 echo "----------------------------------------------------------------------"
-serinstall
+serinstall || return 1
 echo "----------------------------------------------------------------------"
 userinstall
 portinstall
@@ -358,6 +414,24 @@ resinstall
 #[[ -e /etc/gai.conf ]] && grep -qE '^ *precedence ::ffff:0:0/96  100' /etc/gai.conf || echo 'precedence ::ffff:0:0/96  100' >> /etc/gai.conf 2>/dev/null
 }
 
+update_menu() {
+local choice backup
+readp "1：仅更新管理脚本（不重启面板）\n2：升级面板（自动备份并重启服务）\n3：还原管理脚本备份\n0：返回\n请选择【0-3】：" choice
+case "$choice" in
+    1) s4_update_script /usr/bin/x-ui /usr/local/x-ui/v /usr/local/x-ui/backups && exec bash /usr/bin/x-ui ;;
+    2) update ;;
+    3)
+        readp "请输入脚本备份目录的完整路径：" backup
+        if s4_restore_script "$backup" /usr/bin/x-ui /usr/local/x-ui/v; then
+            exec bash /usr/bin/x-ui
+        else
+            red "还原失败，请检查备份目录；当前脚本未更新。"
+        fi
+        ;;
+esac
+show_menu
+}
+
 update() {
 yellow "升级也有可能出意外哦，建议如下："
 yellow "一、点击x-ui面版中的备份与恢复，下载备份文件x-ui-yg.db"
@@ -365,14 +439,28 @@ yellow "二、在 /etc/x-ui-yg 路径导出备份文件x-ui-yg.db"
 readp "确定升级，请按回车(退出请按ctrl+c):" ins
 if [[ -z $ins ]]; then
 if [[ x"${release}" == x"alpine" ]]; then
-rc-service x-ui stop
+rc-service x-ui stop || { red "停止服务失败，取消升级。"; return 1; }
 else
-systemctl stop x-ui
+systemctl stop x-ui || { red "停止服务失败，取消升级。"; return 1; }
 fi
-serinstall && sleep 2
+# Service is stopped: archive the database (including WAL) and settings together.
+local backup
+mkdir -p /usr/local/x-ui/backups
+backup=$(mktemp -d /usr/local/x-ui/backups/panel.XXXXXX)
+if [[ -z "$backup" ]] || ! tar -czf "$backup/data.tar.gz" -C / etc/x-ui-yg usr/local/x-ui/bin; then
+    red "面板资料备份失败，取消升级并尝试恢复服务。"
+    restart
+    return 1
+fi
+yellow "面板资料备份：$backup/data.tar.gz"
+if ! serinstall; then
+    red "升级未完成，尝试重新启动服务；资料备份：$backup/data.tar.gz"
+    restart
+    return 1
+fi
+sleep 2
 restart
 #curl -sL https://gitlab.com/rwkgyg/x-ui-yg/-/raw/main/version/version | awk -F "更新内容" '{print $1}' | head -n 1 > /usr/local/x-ui/v
-curl -sL https://raw.githubusercontent.com/S4MUEL-404/S4MUEL-X-UI/main/version | awk -F "更新内容" '{print $1}' | head -n 1 > /usr/local/x-ui/v
 green "x-ui更新完成" && sleep 2 && x-ui
 else
 red "输入有误" && update
@@ -2699,7 +2787,7 @@ echo "--------------------------------------------------------------------------
 green " 3. 其他设置 【Argo固定临时隧道、生成本地IP订阅链接、设置hy2协议多端口跳跃】"
 green " 4. 变更 x-ui 面板设置 【用户名密码、登录端口、根路径、还原面板】"
 green " 5. 关闭、重启 x-ui"
-green " 6. 更新 x-ui 脚本"
+green " 6. 更新与还原 【脚本独立更新 / 面板升级 / 脚本还原】"
 echo "----------------------------------------------------------------------------------"
 green " 7. 更新并查看聚合通用节点、clash-meta与sing-box客户端配置及订阅链接"
 green " 8. 查看 x-ui 运行日志"
@@ -2918,7 +3006,7 @@ case "$Input" in
  3 ) check_install && changeserv;;
  4 ) check_install && xuichange;;
  5 ) check_install && xuirestop;;
- 6 ) check_install && update;;
+ 6 ) check_install && update_menu;;
  7 ) check_install && sharesub;;
  8 ) check_install && show_log;;
  9 ) bbr;;
