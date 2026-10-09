@@ -6,9 +6,9 @@ permissions:
   contents: read
 jobs:
   update-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Check Bash syntax
         run: bash -n install.sh
       - name: Test update and restore failure paths
