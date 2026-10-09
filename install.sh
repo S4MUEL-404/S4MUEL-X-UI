@@ -17,7 +17,7 @@ blue(){ echo -e "\033[36m\033[01m$1\033[0m";}
 white(){ echo -e "\033[37m\033[01m$1\033[0m";}
 readp(){ read -p "$(yellow "$1")" $2;}
 # BEGIN S4MUEL RELIABLE UPDATE
-S4_SCRIPT_VERSION='v1.1.0-s4'
+S4_SCRIPT_VERSION='v1.1.1-s4'
 S4_SCRIPT_URL='https://raw.githubusercontent.com/S4MUEL-404/S4MUEL-X-UI/main/install.sh'
 
 # Download beside the destination so mv stays on the same filesystem.
@@ -299,7 +299,7 @@ fi
 done
 sleep 1
 green "x-ui登录密码：${password}"
-/usr/local/x-ui/x-ui setting -username ${username} -password ${password} >/dev/null 2>&1
+/usr/local/x-ui/x-ui setting -username "$username" -password "$password" || return 1
 }
 
 portinstall(){
@@ -319,7 +319,7 @@ do
 done
 fi
 sleep 1
-/usr/local/x-ui/x-ui setting -port $port >/dev/null 2>&1
+/usr/local/x-ui/x-ui setting -port "$port" || return 1
 green "x-ui登录端口：${port}"
 }
 
@@ -330,7 +330,7 @@ sleep 1
 if [[ -z $path ]]; then
 path=`date +%s%N |md5sum | cut -c 1-3`
 fi
-/usr/local/x-ui/x-ui setting -webBasePath ${path} >/dev/null 2>&1
+/usr/local/x-ui/x-ui setting -webBasePath "$path" || return 1
 green "x-ui登录根路径：${path}"
 }
 
@@ -341,15 +341,16 @@ if [[ -n $cert ]]; then
 if [[ ! -s /root/ygkkkca/cert.crt ]]; then
 bash <(curl -Ls https://raw.githubusercontent.com/yonggekkk/acme-yg/main/acme.sh)
 fi
-if [[ -s /root/ygkkkca/cert.crt ]]; then
+if [[ -s /root/ygkkkca/cert.crt && -s /root/ygkkkca/private.key ]]; then
 webCertFile="/root/ygkkkca/cert.crt"
 webKeyFile="/root/ygkkkca/private.key"
-/usr/local/x-ui/x-ui cert -webCert "$webCertFile" -webCertKey "$webKeyFile" > /dev/null 2>&1
+/usr/local/x-ui/x-ui cert -webCert "$webCertFile" -webCertKey "$webKeyFile" || { red "HTTPS证书配置失败，停止安装。"; return 1; }
 echo
 green "经检测，已安装了证书，自动开启https登录方式"
 else
 echo
-yellow "经检测，未检测到证书，继续使用http方式登录"
+red "HTTPS证书或私钥缺失，停止安装。"
+return 1
 fi
 fi
 }
@@ -380,9 +381,40 @@ systemctl start warp-go >/dev/null 2>&1
 fi
 }
 
+# Probe the running panel, not certificate marker files or saved settings alone.
+# -k is limited to this loopback readiness probe; browsers still validate certificates.
+s4_panel_scheme() {
+local port="$1" path="$2" scheme code
+[[ "$port" =~ ^[0-9]+$ && "$path" == /* ]] || return 1
+for scheme in https http; do
+    code=$(curl --noproxy '*' -k -sS --connect-timeout 1 --max-time 2 -o /dev/null -w '%{http_code}' "${scheme}://127.0.0.1:${port}${path}" 2>/dev/null) || continue
+    case "$code" in
+        200|301|302|303|307|308) printf '%s\n' "$scheme"; return 0 ;;
+    esac
+done
+return 1
+}
+
+s4_verify_panel() {
+local settings port path scheme attempt
+settings=$(/usr/local/x-ui/x-ui setting -show) || return 1
+port=$(printf '%s\n' "$settings" | awk -F': ' 'NR==3 {print $2}')
+path=$(printf '%s\n' "$settings" | awk -F': ' 'NR==4 {print $2}')
+for attempt in 1 2 3; do
+    scheme=$(s4_panel_scheme "$port" "$path") && break
+    sleep 1
+done
+[[ -n "$scheme" ]] || { red "面板未在配置端口响应，安装未完成。"; return 1; }
+if [[ -n "$cert" && "$scheme" != https ]]; then
+    red "已选择HTTPS，但面板仍使用HTTP，安装未完成。"
+    return 1
+fi
+}
+
 resinstall(){
 echo "----------------------------------------------------------------------"
-restart
+restart || return 1
+s4_verify_panel || return 1
 #curl -sL https://gitlab.com/rwkgyg/x-ui-yg/-/raw/main/version/version | awk -F "更新内容" '{print $1}' | head -n 1 > /usr/local/x-ui/v
 showxuiip
 sleep 2
@@ -401,10 +433,10 @@ openyn
 echo "----------------------------------------------------------------------"
 serinstall || return 1
 echo "----------------------------------------------------------------------"
-userinstall
-portinstall
-pathinstall
-certinstall
+userinstall || return 1
+portinstall || return 1
+pathinstall || return 1
+certinstall || return 1
 mkdir -p /root/ygkkkcaz
 command -v openssl >/dev/null 2>&1 && openssl ecparam -genkey -name prime256v1 -out /root/ygkkkcaz/private.key >/dev/null 2>&1
 command -v openssl >/dev/null 2>&1 && openssl req -new -x509 -days 36500 -key /root/ygkkkcaz/private.key -out /root/ygkkkcaz/cert.crt -subj "/CN=www.bing.com" >/dev/null 2>&1
@@ -459,7 +491,8 @@ if ! serinstall; then
     return 1
 fi
 sleep 2
-restart
+restart || return 1
+s4_verify_panel || return 1
 #curl -sL https://gitlab.com/rwkgyg/x-ui-yg/-/raw/main/version/version | awk -F "更新内容" '{print $1}' | head -n 1 > /usr/local/x-ui/v
 green "x-ui更新完成" && sleep 2 && x-ui
 else
@@ -538,9 +571,9 @@ fi
 restart() {
 yellow "请稍等……"
 if [[ x"${release}" == x"alpine" ]]; then
-rc-service x-ui restart
+rc-service x-ui restart || return 1
 else
-systemctl restart x-ui
+systemctl restart x-ui || return 1
 fi
 sleep 2
 check_status
@@ -555,7 +588,8 @@ crontab /tmp/crontab.tmp >/dev/null 2>&1
 rm /tmp/crontab.tmp
 green "x-ui重启成功"
 else
-red "x-ui重启失败，请运行 x-ui log 查看日志并反馈" && exit
+red "x-ui重启失败，请运行 x-ui log 查看日志并反馈"
+return 1
 fi
 }
 
@@ -2986,11 +3020,19 @@ xuimb="http://${xip1}:${xport}${xpath} 或者 http://${xip2}:${xport}${xpath}"
 else
 xuimb="http://${xip1}:${xport}${xpath}"
 fi
-echo -e "$blue登录地址(裸IP泄露模式-非安全)：$xuimb$plain"
-if [[ -f /root/ygkkkca/ca.log ]]; then
+
+local panel_scheme
+panel_scheme=$(s4_panel_scheme "$xport" "$xpath")
+if [[ "$panel_scheme" == https && -s /root/ygkkkca/ca.log ]]; then
 echo -e "$blue登录地址(域名或IP加密模式-安全)：https://$(cat /root/ygkkkca/ca.log 2>/dev/null):${xport}${xpath}$plain"
 else
-echo -e "$sred强烈建议申请IP或域名证书并开启域名(https)登录方式，以确保面板数据安全$plain"
+if [[ "$panel_scheme" == http ]]; then
+echo -e "$blue登录地址(HTTP)：$xuimb$plain"
+elif [[ "$panel_scheme" == https ]]; then
+echo -e "$blue登录地址(HTTPS)：https://${xip1}:${xport}${xpath}$plain"
+else
+red "面板在配置端口未响应，请检查服务日志；登录地址尚未验证。"
+fi
 fi
 fi
 else

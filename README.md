@@ -54,9 +54,16 @@ bash <(wget -qO- https://raw.githubusercontent.com/S4MUEL-404/S4MUEL-X-UI/main/i
 ```bash
 bash -n install.sh
 python3 test_updates.py
+python3 test_panel.py
 ```
 
 測試只擷取更新函式，在暫存目錄模擬下載，不執行安裝流程。涵蓋成功更新、部分下載失敗、空白與 HTML 回應、語法錯誤、缺少版本、備份失敗、替換失敗、還原及無效還原。
 
 GitHub Actions 對 push 與 pull request 執行相同檢查。尚未在 Linux VPS 實際安裝或升級面板驗證。
 
+
+## v1.1.1-s4：面板就緒與 HTTPS 判斷修正
+
+設定帳號、端口、根路徑或憑證失敗時停止安裝；HTTPS 必須同時具備憑證與私鑰。安裝與面板升級在重啟後，會依已儲存的端口和根路徑探測本機服務；選擇 HTTPS 時若只收到 HTTP 回應，流程會報錯而非顯示成功。主選單也依實際回應協定顯示登入網址。
+
+探測使用 `127.0.0.1`，接受 HTTP 200 與常見重新導向狀態。此檢查確認本機服務就緒，不保證外部防火牆、網域解析或瀏覽器憑證信任正常；探測自簽憑證時會略過本機 TLS 憑證驗證。五項面板探測測試涵蓋 HTTP、HTTPS、HTTPS 要求不符、無監聽服務與錯誤路徑。
