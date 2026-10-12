@@ -15,3 +15,5 @@ jobs:
         run: python3 test_updates.py
       - name: Test panel readiness and HTTPS detection
         run: python3 test_panel.py
+      - name: Test service schedule migration
+        run: python3 test_schedule.py
