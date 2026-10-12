@@ -1,7 +1,6 @@
-v1.1.1-s4
+v1.1.2-s4
 Release notes:
-1. Stop installation when panel settings or service restarts fail.
-2. Require both a certificate and private key for HTTPS; stop on configuration failure.
-3. Probe the saved panel port, base path, and HTTP/HTTPS response after installation or upgrade.
-4. Display login URLs using the live protocol instead of certificate marker files.
-5. Add panel-readiness regression tests to CI.
+1. Remove the legacy daily forced panel restart.
+2. Use systemd recovery instead of child-process polling on systemd hosts.
+3. Migrate existing installer-owned cron jobs without restarting services.
+4. Preserve unrelated cron jobs during migration.

@@ -124,3 +124,11 @@ These tests do not validate every installation or upgrade scenario on a live VPS
 ### v1.0.0-s4
 
 - Introduce S4MUEL branding, project documentation, and independent script/version endpoints while preserving upstream compatibility and attribution.
+
+## Traffic accounting limitation and service schedule fix (v1.1.2)
+
+This release removes the installer-owned daily 02:00 restart and the process-name watchdog on systemd hosts. The upstream service already uses `Restart=on-failure`. Running the updated script migrates existing cron entries without restarting the panel and preserves unrelated jobs. OpenRC hosts retain a service-status watchdog.
+
+To apply this fix to an existing installation, run the quick-start command above and exit the menu after it opens. Updating the repository alone does not update a VPS. No database counters are reset or modified.
+
+This reduces unnecessary service interruptions; it is not a verified fix for missing historical traffic. Lost counters cannot be recovered from the provider's aggregate usage. The upstream panel is distributed as a closed-source binary, and its inbound list does not periodically refresh its displayed counters in the inspected release. Reload the page to retrieve current stored values. Provider bandwidth totals and inbound counters may cover different periods and traffic.

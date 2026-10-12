@@ -17,7 +17,7 @@ blue(){ echo -e "\033[36m\033[01m$1\033[0m";}
 white(){ echo -e "\033[37m\033[01m$1\033[0m";}
 readp(){ read -p "$(yellow "$1")" $2;}
 # BEGIN S4MUEL RELIABLE UPDATE
-S4_SCRIPT_VERSION='v1.1.1-s4'
+S4_SCRIPT_VERSION='v1.1.2-s4'
 S4_SCRIPT_URL='https://raw.githubusercontent.com/S4MUEL-404/S4MUEL-X-UI/main/install.sh'
 
 # Download beside the destination so mv stays on the same filesystem.
@@ -578,14 +578,7 @@ fi
 sleep 2
 check_status
 if [[ $? == 0 ]]; then
-crontab -l 2>/dev/null > /tmp/crontab.tmp
-sed -i '/goxui.sh/d' /tmp/crontab.tmp
-crontab /tmp/crontab.tmp >/dev/null 2>&1
-rm /tmp/crontab.tmp
-crontab -l 2>/dev/null > /tmp/crontab.tmp
-echo "* * * * * /usr/local/x-ui/goxui.sh" >> /tmp/crontab.tmp
-crontab /tmp/crontab.tmp >/dev/null 2>&1
-rm /tmp/crontab.tmp
+xuigo && cronxui || yellow "Service schedule migration failed. Retry running x-ui."
 green "x-ui重启成功"
 else
 red "x-ui重启失败，请运行 x-ui log 查看日志并反馈"
@@ -775,29 +768,47 @@ echo -e "xray状态: $red未启动$plain"
 fi
 }
 
+# BEGIN S4MUEL SERVICE SCHEDULE
 xuigo(){
-cat>/usr/local/x-ui/goxui.sh<<-\EOF
+cat>/usr/local/x-ui/goxui.sh<<-'EOF'
 #!/bin/bash
-xui=`ps -aux |grep "x-ui" |grep -v "grep" |wc -l`
-xray=`ps -aux |grep "xray" |grep -v "grep" |wc -l`
-if [ $xui = 0 ];then
-systemctl restart x-ui
+# systemd already restarts failed processes. Never restart a healthy panel
+# just because its child process is temporarily absent or being reconfigured.
+if command -v systemctl >/dev/null 2>&1; then
+    exit 0
 fi
-if [ $xray = 0 ];then
-systemctl restart x-ui
+if command -v rc-service >/dev/null 2>&1; then
+    rc-service x-ui status >/dev/null 2>&1 || rc-service x-ui start
 fi
 EOF
 chmod +x /usr/local/x-ui/goxui.sh
 }
 
 cronxui(){
-uncronxui
-crontab -l 2>/dev/null > /tmp/crontab.tmp
-echo "* * * * * /usr/local/x-ui/goxui.sh" >> /tmp/crontab.tmp
-echo "0 2 * * * systemctl restart x-ui" >> /tmp/crontab.tmp
-crontab /tmp/crontab.tmp >/dev/null 2>&1
-rm /tmp/crontab.tmp
+local old new errors
+old=$(mktemp) || return 1
+new=$(mktemp) || { rm -f "$old"; return 1; }
+errors=$(LC_ALL=C crontab -l 2>&1 > "$old")
+if [[ $? != 0 ]]; then
+    if [[ "$errors" != *"no crontab for "* || -s "$old" ]]; then
+        rm -f "$old" "$new"; return 1
+    fi
+fi
+# Remove only the two exact legacy jobs owned by this installer.
+sed -E '/^[[:space:]]*0 2 \* \* \* systemctl restart x-ui[[:space:]]*$/d; /^[[:space:]]*\* \* \* \* \* \/usr\/local\/x-ui\/goxui\.sh[[:space:]]*$/d' "$old" > "$new"
+if [[ x"${release}" == x"alpine" ]]; then
+    echo '* * * * * /usr/local/x-ui/goxui.sh' >> "$new"
+fi
+if cmp -s "$old" "$new"; then
+    rm -f "$old" "$new"
+    return 0
+fi
+crontab "$new"
+local result=$?
+rm -f "$old" "$new"
+return "$result"
 }
+# END S4MUEL SERVICE SCHEDULE
 
 uncronxui(){
 crontab -l 2>/dev/null > /tmp/crontab.tmp
@@ -3060,4 +3071,8 @@ case "$Input" in
  * ) exit 
 esac
 }
+# Apply the schedule fix to existing installations without restarting the panel.
+if [[ -x /usr/local/x-ui/x-ui ]]; then
+    xuigo && cronxui || yellow "Service schedule migration failed. Retry running x-ui."
+fi
 show_menu
